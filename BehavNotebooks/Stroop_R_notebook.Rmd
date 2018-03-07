@@ -1,0 +1,189 @@
+---
+title: "Stroop Notebook"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+  html_notebook: default
+  pdf_document: default
+---
+
+# Stroop PRE DATA ANALYSIS
+N=56 (Control+Experimental)
+There is a 3rd undefined group for those that have completed this task, but have dropped out for one reason or another.
+
+## Data Prep
+Getting the Data ready for analysis
+Defaults: R uses dummy coding as it's default. In this sample, the control group and the congruent condition will be the dummy variables in the analysis. So all Estimates are relative to these dummy variables
+
+### Load Requisite R Packages
+note: some of these may not actually be used.
+Step 1) load the necessary libraries
+
+```{r}
+library(ggplot2)
+library(lme4)
+library(languageR) 
+library(lmerTest) #give p-values from mixed models
+library(influence.ME)
+library(plyr) # magic
+library(scales) #for making percents on the y-axis of graphs
+```
+
+### Read in the dataset (in current directory)
+```{r}
+Stroop_data = read.table("Stroop_R_format.csv", header = TRUE, sep = ",")
+```
+
+### Omit missing data (e.g. from practice trials)
+```{r}
+Stroop_data = na.omit(Stroop_data)  
+head(Stroop_data, n = 20) 
+```
+
+
+### Omit the Undefined group from the data and specify group as a factor
+```{r}
+Stroop_data <- subset(Stroop_data,group=="Control" | group=="Experimental")
+Stroop_data$group <- factor(Stroop_data$group)
+summary(Stroop_data)
+contrasts(Stroop_data$group)
+```
+
+
+### Omit the Practice stimtype and specify stimtype as a factor
+```{r}
+Stroop_data <- subset(Stroop_data,stimtype=="Congruent" | stimtype=="Incongruent" | stimtype=="Neutral")
+Stroop_data$stimtype <- factor(Stroop_data$stimtype)
+summary(Stroop_data)
+contrasts(Stroop_data$stimtype)
+```
+
+### Isolate the session to the first session
+```{r}
+Stroop_data_pre <- subset(Stroop_data, session==1) 
+Stroop_data_pre$session <- factor(Stroop_data_pre$session)
+summary(Stroop_data_pre)
+```
+
+
+### specify subject as a factor
+```{r}
+Stroop_data_pre$subject <- as.factor(Stroop_data_pre$subject)
+
+summary(Stroop_data_pre)
+```
+
+## Stroop Accuracy Analysis
+
+### Graph Accuracy Data
+```{r, message=FALSE, warning=FALSE}
+#Control Group Data
+Stroop_data_pre_control <- subset(Stroop_data_pre, group=="Control")
+#change binary data to a percent
+Stroop_data_pre_control_percent <- ddply(Stroop_data_pre_control, .(stimtype, subject), summarize, ACC_perc = mean(ACC))
+
+#Experimental Group Data
+Stroop_data_pre_experimental <- subset(Stroop_data_pre, group=="Experimental")
+#change binary data to a percent
+Stroop_data_pre_experimental_percent <- ddply(Stroop_data_pre_experimental, .(stimtype, subject), summarize, ACC_perc = mean(ACC))
+
+ggplot(data = Stroop_data_pre_control_percent, aes( x = stimtype, y = ACC_perc)) + geom_bar(stat = "identity", width = 0.5) + facet_wrap(~subject) + scale_y_continuous(labels=percent) + scale_x_discrete(labels=c("Con","Inc","Neu")) + ggtitle("Control")
+
+ggplot(data = Stroop_data_pre_experimental_percent, aes( x = stimtype, y = ACC_perc)) + geom_bar(stat = "identity", width = 0.5) + facet_wrap(~subject) + scale_y_continuous(labels=percent) +  scale_x_discrete(labels=c("Con","Inc","Neu")) + ggtitle("Experimental")
+```
+
+**Conclusion**: Subjects have high accuracy accross the board, with some dips for the incongruent condition.
+
+### Model Accuracy (Logit)
+```{r}
+Stroop_ACC_model<-glmer(ACC ~ group*stimtype + (1|subject), family=binomial, data=Stroop_data_pre, verbose=TRUE)
+summary(Stroop_ACC_model)
+```
+
+**Conclusion**: no group differences (as expected). Participant's were significantly less accurate in the Incongruent condition (as expected)
+
+## Stroop Reaction Time Analysis
+
+### Format RT data 
+(subset for RTs when they are accurate, greater than 200ms, and less than 2000 ms)
+See how many observations are lost when we subset the data
+```{r}
+#all observations
+print("All Data")
+All_data <- length(Stroop_data_pre$RT)
+summary(Stroop_data_pre)
+
+#remove innacurate responses
+print("Removed innacurate trials (from all data dataframe)")
+Stroop_data_pre_RT <- subset(Stroop_data_pre, ACC==1)
+All_acc_data <- length(Stroop_data_pre_RT$RT)
+summary(Stroop_data_pre_RT)
+
+#remove short and long RTs
+print("Removed slow and fast RTs")
+Stroop_data_pre_RT <- subset(Stroop_data_pre_RT, RT>200 & RT<2000)
+filtered_data <- length(Stroop_data_pre_RT$RT)
+summary(Stroop_data_pre_RT)
+
+print("Percentage of Data Removed")
+perc_data_rm <- (1 - (filtered_data/All_acc_data) ) * 100
+perc_data_rm
+```
+
+**Conclusion**: barely any data removed from RT filtering. Good to go.
+
+
+### Graph RT data
+Note: just doing it by stimtype since subject data appears to be in good ranges
+```{r, message=FALSE, warning=FALSE}
+#hist(subset(Stroop_data_pre_RT, group=="Control")$RT,ylim=c(0,1600))
+#hist(subset(Stroop_data_pre_RT, group=="Experimental")$RT,ylim=c(0,1600))
+ggplot(data = subset(Stroop_data_pre_RT, group=="Control"), aes(subset(Stroop_data_pre_RT, group=="Control")$RT)) + geom_histogram() + facet_wrap(~subset(Stroop_data_pre_RT, group=="Control")$stimtype) + scale_y_continuous(limits = c(0,550)) + scale_x_continuous(limits = c(0,2000))
+
+ggplot(data = subset(Stroop_data_pre_RT, group=="Experimental"), aes(subset(Stroop_data_pre_RT, group=="Experimental")$RT)) + geom_histogram() + facet_wrap(~subset(Stroop_data_pre_RT, group=="Experimental")$stimtype) + scale_y_continuous(limits = c(0,550)) + scale_x_continuous(limits = c(0,2000))
+
+```
+
+**Conclusion**: data show a bit of skew, will transform to see if they look better
+
+### Log Transform RT data
+```{r}
+Stroop_data_pre_RT$log_RT <- log(1/Stroop_data_pre_RT$RT)
+```
+
+### graph logged RT data
+```{r, message=FALSE, warning=FALSE}
+#hist(subset(Stroop_data_pre_RT, group=="Control")$RT,ylim=c(0,1600))
+#hist(subset(Stroop_data_pre_RT, group=="Experimental")$RT,ylim=c(0,1600))
+ggplot(data = subset(Stroop_data_pre_RT, group=="Control"), aes(subset(Stroop_data_pre_RT, group=="Control")$log_RT)) + geom_histogram() + facet_wrap(~subset(Stroop_data_pre_RT, group=="Control")$stimtype) + scale_y_continuous(limits = c(0,550))
+
+ggplot(data = subset(Stroop_data_pre_RT, group=="Experimental"), aes(subset(Stroop_data_pre_RT, group=="Experimental")$log_RT)) + geom_histogram() + facet_wrap(~subset(Stroop_data_pre_RT, group=="Experimental")$stimtype) + scale_y_continuous(limits = c(0,550))
+
+```
+
+**Conclusion**: This appears to introduce more outliers, I'm going to stick with the untransformed data for analysis
+
+
+### Model RT by group and stimtype
+```{r}
+Stroop_RT_model <- lmer(RT ~ group*stimtype + (1|subject), data = Stroop_data_pre_RT)
+summary(Stroop_RT_model)
+```
+
+**Conclusions**: No main group effect or interactions (as expected), The incongruent and neutral trials are slower relative to congruent trials (as expected)
+
+### Model log RT by group and stimtype
+```{r}
+Stroop_log_RT_model <- lmer(log_RT ~ group*stimtype + (1|subject), data = Stroop_data_pre_RT)
+summary(Stroop_log_RT_model)
+```
+
+**Conclusion**: Same story as the untransformed data.
+
+## Conclusions
+good: 
+No overall group differences in RT and Accuracy
+
+bad:
+Nothing really, as far as I can tell these data are clean.

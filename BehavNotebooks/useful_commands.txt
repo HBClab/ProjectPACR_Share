@@ -1,0 +1,2 @@
+# get rid of undefined groups
+=IF(OR(A2=44,A2=185,A2=133,A2=172,A2=202,A2=208),"Control",IF(OR(A2=56,A2=66),"Experimental",C2))

@@ -1,0 +1,200 @@
+---
+title: "Nback Notebook"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+  html_notebook: default
+  pdf_document: default
+---
+
+TODO: deal with first trial for oneback and first two trials for twoback
+  -current solution is to eliminate trials that are accurate with a RT of 0.
+
+# NBACK PRE DATA ANALYSIS
+N=56 (Control+Experimental)
+There is a 3rd undefined group for those that have completed this task, but have dropped out for one reason or another.
+
+## Data Prep
+Getting the Data ready for analysis
+Defaults: R uses dummy coding as it's default. In this sample, the control group and the 1-Back will be the dummy variables in the analysis. So all Estimates are relative to these dummy variables
+
+### Load Requisite R Packages
+note: some of these may not actually be used.
+```{r Loading R Packages}
+library(ggplot2)
+library(lme4)
+library(languageR) 
+library(lmerTest)
+library(influence.ME)
+library(plyr) # magic
+library(scales) #for making percents on the y-axis of graphs
+```
+
+
+### Read in the dataset (in current directory)
+```{r Read in Nback Data}
+Nback_data = read.table("Nback_R_format.csv", header = TRUE, sep = ",")
+```
+
+### Omit missing data (e.g. from practice trials)
+```{r Omit Missing data (e.g. from practice trials)}
+Nback_data[Nback_data==""] <- NA
+#my current solution to deal with the first trials of one-back and twoback
+Nback_data$RT[Nback_data$RT==0 & Nback_data$ACC==1] <- NA
+Nback_data = na.omit(Nback_data)  
+head(Nback_data, n = 20) 
+```
+
+### Omit the Undefined group from the data and specify group as a factor
+```{r Omit Undefined Group}
+Nback_data <- subset(Nback_data,group=="Control" | group=="Experimental")
+Nback_data$group <- factor(Nback_data$group)
+summary(Nback_data)
+contrasts(Nback_data$group)
+```
+
+### Omit the Undefined stimtype and specify stimtype as a factor
+```{r Omit Undefined stimtypes}
+Nback_data <- subset(Nback_data,stimtype=="singleBl" | stimtype=="twoBlock")
+Nback_data$stimtype <- factor(Nback_data$stimtype)
+summary(Nback_data)
+contrasts(Nback_data$stimtype)
+```
+
+### Isolate the session to the first session
+```{r Limit data to Pre}
+#Isolate Pre data
+Nback_data_pre <- subset(Nback_data, session==1) 
+#Specify Pre session as a factor.
+Nback_data_pre$session <- factor(Nback_data_pre$session)
+summary(Nback_data_pre)
+```
+
+
+
+### specify subject as a factor
+```{r Treat Subject as a factor}
+Nback_data_pre$subject <- as.factor(Nback_data_pre$subject)
+summary(Nback_data_pre)
+```
+
+## NBack Accuracy Analysis
+
+### Print out binary accuracy data for each subject for each group
+```{r Graphs of Subject Accuracy}
+#Control Group Data
+Nback_data_pre_control <- subset(Nback_data_pre, group=="Control")
+#change binary data to a percent
+Nback_data_pre_control_percent <- ddply(Nback_data_pre_control, .(stimtype, subject), summarize, ACC_perc = mean(ACC))
+
+#Experimental Group Data
+Nback_data_pre_experimental <- subset(Nback_data_pre, group=="Experimental")
+#change binary data to a percent
+Nback_data_pre_experimental_percent <- ddply(Nback_data_pre_experimental, .(stimtype, subject), summarize, ACC_perc = mean(ACC))
+
+ggplot(data = Nback_data_pre_control_percent, aes( x = stimtype, y = ACC_perc)) + geom_bar(stat = "identity", width = 0.5) + facet_wrap(~subject) + scale_y_continuous(labels=percent) + scale_x_discrete(labels=c("1-Back","2-Back")) + ggtitle("Control")
+
+ggplot(data = Nback_data_pre_experimental_percent, aes( x = stimtype, y = ACC_perc)) + geom_bar(stat = "identity", width = 0.5) + facet_wrap(~subject) + scale_y_continuous(labels=percent) +  scale_x_discrete(labels=c("1-Back","2-Back")) + ggtitle("Experimental")
+
+
+```
+
+**Conclusion**: 
+sub164 has low accuracy for the 2-back
+sub86 has low accuracy for the 2-back
+
+
+### Model Accuracy (Logit)
+Testing for main effects of and interactions between group (Exp and Con) and stimtype (1-Back and 2-Back) using random intercepts for subjects to account for variability between subjects. Since the response variable (ACC) contains 1's and 0's, I'm using a Logistic model for the data. 
+```{r Generalized Linear Model (Logit)}
+
+Nback_ACC_model<-glmer(ACC ~ group*stimtype + (1|subject), family=binomial, data=Nback_data_pre, verbose=TRUE)
+summary(Nback_ACC_model)
+```
+
+**Conclusion**: 2-Back is significantly less accurate than 1-Back (as expected), but no group effect or groupxstimtype interaction (as expected)
+
+## NBack Reaction Time Analysis
+
+### Format RT data 
+(subset for RTs when they are accurate, greater than 200ms, and less than 2000 ms)
+See how many observations are lost when we subset the data
+```{r Filtering RT Data}
+#all observations
+print("All Data")
+All_data <- length(Nback_data_pre$RT)
+summary(Nback_data_pre)
+
+#remove innacurate responses
+print("Removed innacurate trials (from all data dataframe)")
+Nback_data_pre_RT <- subset(Nback_data_pre, ACC==1)
+ACC_filt_data <- length(Nback_data_pre_RT$RT)
+summary(Nback_data_pre_RT)
+
+#remove short and long RTs
+print("Removed slow and fast RTs")
+Nback_data_pre_RT <- subset(Nback_data_pre_RT, RT>200 & RT<2000)
+filt_data <- length(Nback_data_pre_RT$RT)
+summary(Nback_data_pre_RT)
+
+print("Percent Data Removed (from RT filtering)")
+perc_data_rm <- (1 - (filt_data/ACC_filt_data))*100
+perc_data_rm
+```
+
+**Conclusion**: barely any RTs are removed, I'm not worried about this
+
+### graph RT data
+```{r Histograms of subject RT}
+#hist(subset(Nback_data_pre_RT, group=="Control")$RT,ylim=c(0,800))
+#hist(subset(Nback_data_pre_RT, group=="Experimental")$RT,ylim=c(0,800))
+
+Nback_data_pre_RT_control <- subset(Nback_data_pre_RT, group=="Control")
+
+Nback_data_pre_RT_experimental <- subset(Nback_data_pre_RT, group=="Experimental")
+
+#collapsing across stimtype (1-back and 2-back), not enough data to make a good histogram, and the graphs become too crowded if I include stimtype as a facet
+RT_hist_control <- ggplot(data = Nback_data_pre_RT_control, aes(RT)) + geom_histogram(binwidth = 30) + facet_wrap(~subject) + scale_y_continuous(limits = c(0,25)) + scale_x_continuous(limits = c(0,2000))
+print(RT_hist_control)
+
+RT_hist_experimental <- ggplot(data = Nback_data_pre_RT_experimental, aes(RT)) + geom_histogram(binwidth = 30) + facet_wrap(~subject) + scale_y_continuous(limits = c(0,25)) + scale_x_continuous(limits = c(0,2000))
+print(RT_hist_experimental)
+```
+
+**Conclusion**: RT data shows classic right skew for almost all the participants, going to transform the RT data to make them normally distributed
+
+### Log Transform RT data to make them normally distributed
+```{r Log Transform RT data}
+Nback_data_pre_RT$log_RT <- log(1/Nback_data_pre_RT$RT)
+```
+
+
+### Graph log_RT data 
+```{r Histograms of subject log_RT}
+Nback_data_pre_RT_control <- subset(Nback_data_pre_RT, group=="Control")
+
+Nback_data_pre_RT_experimental <- subset(Nback_data_pre_RT, group=="Experimental")
+
+#collapsing across stimtype (1-back and 2-back), not enough data to make a good histogram, and the graphs become too crowded if I include stimtype as a facet
+RT_hist_control <- ggplot(data = Nback_data_pre_RT_control, aes(log_RT)) + geom_histogram(binwidth = .1) + facet_wrap(~subject) + scale_y_continuous(limits = c(0,75)) + scale_x_continuous(limits = c(-8,-5))
+print(RT_hist_control)
+
+RT_hist_experimental <- ggplot(data = Nback_data_pre_RT_experimental, aes(log_RT)) + geom_histogram(binwidth = .1) + facet_wrap(~subject) + scale_y_continuous(limits = c(0,75)) + scale_x_continuous(limits = c(-8,-5))
+print(RT_hist_experimental)
+```
+
+**Conclusion**: The log transformed RT data looks more normally distributed. Going to use the log transformed RTs in the linear model
+
+### Model log_RT (lmer)
+Testing for main effects of and interactions between group (Exp and Con) and stimtype (1-Back and 2-Back) using random intercepts for subjects to account for variability between subjects. The response variable is a continuous, normally distributed variable (Reaction Time), so I am using a regular linear model with random subject intercepts (account for mean differences)
+```{r}
+Nback_RT_model <- lmer(log_RT ~ group*stimtype + (1|subject), data = Nback_data_pre_RT)
+summary(Nback_RT_model)
+```
+
+**Conclusion**: No group differences (as expected) and the 2-Back is slower (I think) than the 1-Back (as expected)
+
+## Conclusions
+Participants performed the Nback as expected with no differences between groups. 
+A couple participants (sub86,sub164) have low accuracy in the 2-Back

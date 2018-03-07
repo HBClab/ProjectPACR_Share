@@ -1,0 +1,192 @@
+---
+title: "VSTM Notebook"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+  html_notebook: default
+  pdf_document: default
+---
+
+# **VSTM PRE DATA ANALYSIS**
+
+NOTE: missing data from sub161 (from control group)
+
+N=55 (Control+Experimental)
+There is a 3rd undefined group for those that have completed this task, but have dropped out for one reason or another.
+
+## **Data Prep**
+Getting the Data ready for analysis
+Defaults: R uses dummy coding as it's default. In this sample, the control group and the simboth condition will be the dummy variables in the analysis. So all Estimates are relative to these dummy variables
+
+### Load Requisite R Packages
+note: some of these may not actually be used.
+
+```{r}
+library(ggplot2)
+library(lme4)
+library(languageR) 
+library(lmerTest) #give p-values from mixed models
+library(influence.ME)
+library(plyr) # magic
+library(scales) #for making percents on the y-axis of graphs
+```
+
+### Read in the dataset (in current directory)
+```{r}
+VSTM_data = read.table("VSTM_R_format.csv", header = TRUE, sep = ",")
+```
+
+### Omit missing data (e.g. from practice trials)
+```{r}
+VSTM_data = na.omit(VSTM_data)  
+head(VSTM_data, n = 20) 
+```
+
+
+### Omit the Undefined group from the data and specify group as a factor
+```{r}
+VSTM_data <- subset(VSTM_data,group=="Control" | group=="Experimental")
+VSTM_data$group <- factor(VSTM_data$group)
+summary(VSTM_data)
+contrasts(VSTM_data$group)
+```
+
+
+
+### Omit the Practice stimtype and specify stimtype as a factor
+```{r}
+VSTM_data <- subset(VSTM_data,stimtype=="SimBoth" | stimtype=="SimColour" | stimtype=="SimShape")
+VSTM_data$stimtype <- factor(VSTM_data$stimtype)
+summary(VSTM_data)
+contrasts(VSTM_data$stimtype)
+```
+
+### Isolate the session to the first session
+```{r}
+VSTM_data_pre <- subset(VSTM_data, session==1) 
+VSTM_data_pre$session <- factor(VSTM_data_pre$session)
+summary(VSTM_data_pre)
+```
+
+
+### specify subject as a factor
+```{r}
+VSTM_data_pre$subject <- as.factor(VSTM_data_pre$subject)
+
+summary(VSTM_data_pre)
+```
+
+## **VSTM Accuracy Analysis**
+
+### Print out binary accuracy data for each subject for each group
+```{r, message=FALSE, warning=FALSE}
+#Control Group Data
+VSTM_data_pre_control <- subset(VSTM_data_pre, group=="Control")
+#change binary data to a percent
+VSTM_data_pre_control_percent <- ddply(VSTM_data_pre_control, .(stimtype, subject), summarize, ACC_perc = mean(ACC))
+
+#Experimental Group Data
+VSTM_data_pre_experimental <- subset(VSTM_data_pre, group=="Experimental")
+#change binary data to a percent
+VSTM_data_pre_experimental_percent <- ddply(VSTM_data_pre_experimental, .(stimtype, subject), summarize, ACC_perc = mean(ACC))
+
+ggplot(data = VSTM_data_pre_control_percent, aes( x = stimtype, y = ACC_perc)) + geom_bar(stat = "identity", width = 0.5) + facet_wrap(~subject) + scale_y_continuous(labels=percent) + scale_x_discrete(labels=c("Both","Color","Shape")) + ggtitle("Control")
+
+ggplot(data = VSTM_data_pre_experimental_percent, aes( x = stimtype, y = ACC_perc)) + geom_bar(stat = "identity", width = 0.5) + facet_wrap(~subject) + scale_y_continuous(labels=percent) +  scale_x_discrete(labels=c("Both","Color","Shape")) + ggtitle("Experimental")
+```
+
+**Conclusion**: Subjects appear to be less accurate when trying to match both shape and color as opposed to either shape or color. No worrying data points.
+
+### Model Accuracy (Logit)
+```{r}
+VSTM_ACC_model<-glmer(ACC ~ group*stimtype + (1|subject), family=binomial, data=VSTM_data_pre, verbose=TRUE)
+summary(VSTM_ACC_model)
+```
+
+**Conclusion**: there is no group effect (as expected), participants are more accurate when they only have to guess if they saw one attribute (color or shape) versus both (color & shape) (as expected)
+
+## **VSTM Reaction Time Analysis**
+
+### Format RT data 
+(subset for RTs when they are accurate, greater than 200ms, and less than 5000 ms) (speed not important in this analysis)
+See how many observations are lost when we subset the data
+```{r}
+#all observations
+print("All Data")
+All_data <- length(VSTM_data_pre$RT)
+summary(VSTM_data_pre)
+
+#remove innacurate responses
+print("Removed innacurate trials (from all data dataframe)")
+VSTM_data_pre_RT <- subset(VSTM_data_pre, ACC==1)
+All_acc_data <- length(VSTM_data_pre_RT$RT)
+summary(VSTM_data_pre_RT)
+
+#remove short and long RTs
+print("Removed slow and fast RTs")
+VSTM_data_pre_RT <- subset(VSTM_data_pre_RT, RT>200 & RT<5000)
+filtered_data <- length(VSTM_data_pre_RT$RT)
+summary(VSTM_data_pre_RT)
+
+print("Percentage of Data Removed")
+perc_data_rm <- (1 - (filtered_data/All_acc_data) ) * 100
+perc_data_rm
+```
+
+**Conclusion**: Only half a percentage point of data removed, well within acceptable standards
+
+
+
+
+### Graph RT data
+Note: Only looking at RT data by condition.
+```{r, message=FALSE, warning=FALSE}
+#hist(subset(VSTM_data_pre_RT, group=="Control")$RT,ylim=c(0,1600))
+#hist(subset(VSTM_data_pre_RT, group=="Experimental")$RT,ylim=c(0,1600))
+ggplot(data = subset(VSTM_data_pre_RT, group=="Control"), aes(subset(VSTM_data_pre_RT, group=="Control")$RT)) + geom_histogram() + facet_wrap(~subset(VSTM_data_pre_RT, group=="Control")$stimtype) + scale_y_continuous(limits = c(0,300)) + scale_x_continuous(limits = c(0,5000))
+
+ggplot(data = subset(VSTM_data_pre_RT, group=="Experimental"), aes(subset(VSTM_data_pre_RT, group=="Experimental")$RT)) + geom_histogram() + facet_wrap(~subset(VSTM_data_pre_RT, group=="Experimental")$stimtype) + scale_y_continuous(limits = c(0,300)) + scale_x_continuous(limits = c(0,5000))
+
+```
+
+**Conclusion**: This data shows some right skew (outliers to the right), trying log transform.
+
+
+### Log Transform RT data 
+```{r}
+VSTM_data_pre_RT$log_RT <- log(1/VSTM_data_pre_RT$RT)
+```
+
+
+### Graph logged RT data
+```{r, message=FALSE, warning=FALSE}
+#hist(subset(VSTM_data_pre_RT, group=="Control")$RT,ylim=c(0,1600))
+#hist(subset(VSTM_data_pre_RT, group=="Experimental")$RT,ylim=c(0,1600))
+ggplot(data = subset(VSTM_data_pre_RT, group=="Control"), aes(subset(VSTM_data_pre_RT, group=="Control")$log_RT)) + geom_histogram() + facet_wrap(~subset(VSTM_data_pre_RT, group=="Control")$stimtype) + scale_y_continuous(limits = c(0,300))
+
+ggplot(data = subset(VSTM_data_pre_RT, group=="Experimental"), aes(subset(VSTM_data_pre_RT, group=="Experimental")$log_RT)) + geom_histogram() + facet_wrap(~subset(VSTM_data_pre_RT, group=="Experimental")$stimtype) + scale_y_continuous(limits = c(0,300))
+
+```
+
+**Conclusion**: Data Appears to benefit from transform, using log RT for analysis
+
+### Model log RT 
+```{r}
+VSTM_RT_model <- lmer(log_RT ~ group*stimtype + (1|subject), data = VSTM_data_pre_RT)
+summary(VSTM_RT_model)
+```
+
+**Conclusion**: RT does not differ between groups or between stimtypes (as expected).
+
+## **Conclusions**
+good:
+No overall group differences or group interactions.
+
+bad:
+Nothing that I can find, data are in good order.
+
+
+
+
+
