@@ -8,4 +8,7 @@ Data Sharing, currently contains:
   - Spatial Working Memory
   - Stroop
   - Visual Short Term Memory
-  
+  - Digit Symbol Substitution Task
+  - Letter Comparison
+  - Pattern Comparison
+  - Trails A & B

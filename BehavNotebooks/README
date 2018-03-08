@@ -1,0 +1,283 @@
+Title: PACR task info
+Description: contains basic parameters for PACR tasks and descriptions of raw data
+Key Terms:
+  - task: name of the task
+  - trial_type: names of the conditions
+  - trial_num: >
+      number of trials per condition (is a list if one or more of the trial
+      types has a different number of trials)
+  - stim_duration (ms): length of stimulus presentation
+  - resp_keys: keyboard keys (or response button) used
+  - resp_meaning: what the key press "means"
+  - resp_period (ms): how long the participant has to respond to a trial
+  - iti (ms): inter-trial interval
+  - sri (ms): stimulus response interval
+Tasks:
+  - Visual Short Term Memory:
+    - description: >
+        An array of four objects briefly appeared on the screen. After a delay,
+        an object appeared and participants had to decide whether this stimulus was
+        in the original array. The experiment consisted of three blocks with
+        targets varying in color, shape, (practice blocks) and conjunctions of
+        color and shape (task block), respectively. Visual short term memory was
+        measured by the composite of RT and accuracy (i.e., average of normalized
+        scores of RT and accuracy) on the conjunction condition. Practice trials-
+        (color: 4, shape: 4, both: 4)
+    - filename: VSTM_R_format.csv
+      - Column Names:
+        - subject: subject study ID
+        - session:
+          - 1: Pre training session
+          - 2: Post training session
+        - group:
+          - Control: group assigned to brain training games with good face validity
+          - Experimental: group assigned to adaptive brain training games
+        - stimtype:
+          - ShapePractice: practice trials for comparing shapes
+          - ColorPractice: practice trials for comparing colors
+          - PracticeBoth: practice trials for comparing both color/shape
+          - SimShape: trials comparing shape
+          - SimColour: trials comparing color
+          - SimBoth: trials comparing both color/shape
+        - ACC:
+          - 1: correct
+          - 0: incorrect
+        - RT: Reaction Time
+  - N-back:
+    - description: >
+        Participants viewed a sequence of centrally presented letters. For each
+        letter, participants were instructed to determine if the letter was the
+        same as the previous letter (practice block), or the same as the letter
+        two back (task block). N-back memory was measured by the composite of RT
+        and accuracy on the two-back condition.
+    - notes: >
+        The number of stimuli was constant (100), but for the 1-back, the
+        participant does not respond to the first stimulus, and for the 2-back,
+        the participant does not respond to the first two stimuli, resulting in
+        99 and 98 responses, respectively.
+    - filename: Nback_R_format.csv
+      - Column Names:
+        - subject: subject study ID
+        - session:
+          - 1: Pre training session
+          - 2: Post training session
+        - group:
+          - Control: group assigned to brain training games with good face validity
+          - Experimental: group assigned to adaptive brain training games
+        - stimtype:
+          - blank: practice trials
+          - singleBl: one-back
+          - twoBlock: two-back
+        - ACC:
+          - 1: correct
+          - 0: incorrect
+        - RT: Reaction Time
+  - Spatial Working Memory:
+    - description: >
+        On each trial, a configuration of four black dots was presented on the
+        screen. After a brief delay, one dot appeared and participants were
+        instructed to determine if the dot was in the same position as one of the
+        black dots presented earlier in that trial. Spatial working memory was
+        measured by the composite of RT and accuracy.
+    - filename: SPWM_R_format.csv
+      - Column Names:
+        - subject: subject study ID
+        - session:
+          - 1: Pre training session
+          - 2: Post training session
+        - group:
+          - Control: group assigned to brain training games with good face validity
+          - Experimental: group assigned to adaptive brain training games
+        - stimtype:
+          - blank: practice trials
+          - four_nm: the probe dot was not in any of the locations of the cue dots
+          - four_m: the probe dot was in one of the locations of the cue dots
+        - ACC:
+          - 1: correct
+          - 0: incorrect
+        - RT: Reaction Time
+  - Color Stroop:
+    - description: >
+        Participants viewed a sequence of words and were asked to determine the
+        color of the word. Three trial types were randomly presented: congruent
+        (e.g., word “red” in red ink), neutral (e.g., word “dog” in red ink), or
+        incongruent (e.g., word “red” in blue ink). The Stroop cost was calculated
+        by contrasting the composite scores of congruent and incongruent
+        conditions.
+    - filename: Stroop_R_format.csv
+      - Column Names:
+        - subject: subject study ID
+        - session:
+          - 1: Pre training session
+          - 2: Post training session
+        - group:
+          - Control: group assigned to brain training games with good face validity
+          - Experimental: group assigned to adaptive brain training games
+        - stimtype:
+          - blank: practice trials
+          - Congruent: the word matched the color
+          - Incongruent: the word was a different color from the font
+          - Neutral: the word was unrelated to the color
+        - ACC:
+          - 1: correct
+          - 0: incorrect
+        - RT: Reaction Time
+  - Attentional Blink:
+    - description: >
+        Participants viewed sequences of rapidly presented (17 ms) black letters.
+        The time between presented letters is 75 ms.
+        In each sequence, a white letter appeared (location in sequence varied
+        between the 7th, 10th, and 13th letter) and a probe followed the white
+        letter at varying lags (2, 4, 6, or 8 letters after). During the
+        critical condition, participants were asked to identify the white letter
+        and the following probe. The Attentional Blink was calculated by
+        contrasting the composite scores of the probe appeared on lag 2 (probe
+        appeared 2 items after the white letter) and lag 8 (probe appeared 8 items
+        after the white letter).
+    - notes: >
+        After each trial the participant was asked about the white letter and
+        if a probe appeared.
+    - filename: AttBli_R_format.csv
+      - Column Names:
+        - subject: subject study ID
+        - session:
+          - 1: Pre training session
+          - 2: Post training session
+        - group:
+          - Control: group assigned to brain training games with good face validity
+          - Experimental: group assigned to adaptive brain training games
+        - stimtype:
+          - blank: practice trials
+          - -1: the probe occurred right before the cue (control)
+          - 2: the probe occurred two letters after the cue
+          - 4: the probe occurred four letters after the cue
+          - 6: the probe occurred six letters after the cue
+          - 8: the probe occurred eight letters after the cue
+        - letter_ACC:
+          - 1: correctly identified the white letter cue (either: b,g, or s)
+          - 0: incorrectly identified the white letter cue
+        - letter_RT: reaction time to identify letter cue
+        - probe_ACC:
+          - 1: correctly identified existence of the probe (y/n)
+          - 0: incorrectly identified existence of the probe (y/n)
+        - probe_RT: reaction time to identify existence of probe
+  - Flanker:
+    - description: >
+        Participants responded to the direction of a central arrow that pointed
+        in the same (congruent) or opposite direction (incongruent) as four other
+        adjacent arrows (two on each side). The Flanker cost was calculated by
+        contrasting the composite scores of congruent and incongruent conditions
+    - notes: >
+        The iti is distributed between 2000-10000 ms, with an average of 2500 ms
+        The responses were made using a hand box (one per hand)
+    - filename: Flanker_R_format.csv
+      - Column Names:
+        - subject: subject study ID
+        - session:
+          - 1: Pre training session
+          - 2: Post training session
+        - group:
+          - Control: group assigned to brain training games with good face validity
+          - Experimental: group assigned to adaptive brain training games
+        - stimtype:
+          - null: null trial (fixation cross only)
+          - con: the five arrows face the same direction (e.g. <<<<<)
+          - neu: the flanking arrows are underscores (e.g. __<__)
+          - inc: the central arrow faced the opposite direction of the flanking arrows (e.g. >><>>)
+        - ACC:
+          - 1: correct
+          - 0: incorrect
+        - RT: Reaction Time
+  - Digit Symbol Substitution
+    - description: >
+        A dictionary connecting the symbols and numeric digits is at the top of a
+        printed sheet, and below were rows of numbers with an open box below each
+        number for the participant to write the corresponding symbol. After eight
+        practice trials, participants were given two minutes to fill out as many
+        of the boxes as they could.
+    - filename: processing_speed_R.csv
+      - Column Names:
+        - subject: subject study ID
+        - session:
+          - 1: Pre training session
+          - 2: Post training session
+        - group:
+          - Control: group assigned to brain training games with good face validity
+          - Experimental: group assigned to adaptive brain training games
+        - dsst: the number of items participants correctly filled out
+  - Pattern Comparison
+    - description: >
+        Two patterns are presented side by side with a line between them for the
+        participant to place the letter 'S'(same) or 'D'(different) between the
+        patterns. After three practice trials, participants are given 30 seconds
+        to compare as many patterns as they can. After 30 seconds, the participants
+        are given another sheet and another 30 seconds to fill out as many patterns
+        as they can again.
+    - notes: >
+        The outcome measure is the average number of patterns correctly compared
+        between the two 30 second periods.
+    - filename: processing_speed_R.csv
+      - Column Names:
+        - subject: subject study ID
+        - session:
+          - 1: Pre training session
+          - 2: Post training session
+        - group:
+          - Control: group assigned to brain training games with good face validity
+          - Experimental: group assigned to adaptive brain training games
+        - pattern_comp: the average number of comparisons correctly completed
+  - Letter Comparison
+    - description: >
+        Two strings are presented side by side with a line between them for the
+        participant to place the letter 'S'(same) or 'D'(different) between the
+        strings. After three practice trials, participants are given 30 seconds
+        to compare as many strings as they can. After 30 seconds, the participants
+        are given another sheet and another 30 seconds to fill out as many strings
+        as they can again.
+    - notes: >
+        The outcome measure is the average number of strings correctly compared
+        between the two 30 second periods.
+    - filename: processing_speed_R.csv
+      - Column Names:
+        - subject: subject study ID
+        - session:
+          - 1: Pre training session
+          - 2: Post training session
+        - group:
+          - Control: group assigned to brain training games with good face validity
+          - Experimental: group assigned to adaptive brain training games
+        - letter_comp: the average number of comparisons correctly completed
+  - Trails A & B:
+    - description: >
+        Both parts of the Trail Making Test consist of 25 circles distributed over a sheet of paper.
+        In Part A, the circles are numbered 1 – 25, and the participant drew
+        lines to connect the numbers in ascending order. In Part B, the circles
+        include both numbers (1 – 13) and letters (A – L); as in Part A, the participant
+        drew lines to connect the circles in an ascending pattern, but with the added
+        task of alternating between the numbers and letters (i.e., 1-A-2-B-3-C, etc.).
+        The participant was instructed to connect the circles as quickly as possible,
+        without lifting the pen or pencil from the paper. If the participant made an error,
+        we pointed it out immediately and allowed the participant to correct it.
+        Errors affect the participant's score only in that the correction of errors
+        was included in the completion time for the task.
+    - filename: trails_fmt.tsv
+      - Column Names:
+        - pacr_id: subject study ID
+        - pre_time_a: the time it took to complete the numbers only portion of trails
+                      for the pre training session
+        - pre_err_a: the number of errors in the number only portion of trails
+                     for the pre training session
+        - pre_time_b: the time it took to complete the numbers/letters portion of trails
+                      for the pre training session
+        - pre_err_b: the number of errors in the number/letters portion of trails
+                     for the pre training session
+        - post_time_a: the time it took to complete the numbers only portion of trails
+                       for the post training session
+        - post_err_a: the number of errors in the number only portion of trails
+                      for the post training session
+        - post_time_b: the time it took to complete the numbers/letters portion of trails
+                       for the post training session
+        - post_err_b: the number of errors in the number/letters portion of trails
+                      for the post training session
+        - pre_timecost: pre_time_b - pre_time_a
+        - post_timecost: post_time_b - post_time_a
