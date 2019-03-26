@@ -1,6 +1,7 @@
 ## PACR-AD
 Data Sharing, currently contains:
-- BehavNotebooks
+
+- BehavNotebooks: details about task parameters
   - Attentional Blink Task
   - Flanker Task (occurred within MRI)
   - Nback
@@ -12,3 +13,7 @@ Data Sharing, currently contains:
   - Letter Comparison
   - Pattern Comparison
   - Trails A & B
+
+- SupplementalMethods
+
+- SupplementalResults
