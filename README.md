@@ -1,5 +1,5 @@
 ## PACR-AD
-Data Sharing, currently contains:
+Here we share more information about our PACR cognitive training project. 
 
 - BehavNotebooks: details about task parameters
   - Attentional Blink Task
@@ -17,3 +17,5 @@ Data Sharing, currently contains:
 - SupplementalMethods
 
 - SupplementalResults
+
+- Pre-registration log: more details and rationale for changes in our pre-registration throughout the course of the study
