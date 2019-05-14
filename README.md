@@ -2,7 +2,7 @@
 Here we share more information about our PACR cognitive training project. 
 
 - Overall study scheme:
-![](Overall-study-scheme.png | width=500)
+<img src="Overall-study-scheme.png" alt="study-scheme" width="500"/>
 
 - BehavNotebooks: details about task parameters
   - Attentional Blink Task
