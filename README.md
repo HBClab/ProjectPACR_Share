@@ -1,6 +1,9 @@
 ## PACR-AD
 Here we share more information about our PACR cognitive training project. 
 
+- Overall study scheme:
+![](Overall-study-scheme.png | width=500)
+
 - BehavNotebooks: details about task parameters
   - Attentional Blink Task
   - Flanker Task (occurred within MRI)
